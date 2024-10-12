@@ -29,7 +29,8 @@
     "@prisma/client": "^5.20.0",
     "kafkajs": "^2.2.4",
     "reflect-metadata": "^0.2.0",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "store-mag-types": "^1.0.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
