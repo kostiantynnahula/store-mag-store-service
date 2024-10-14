@@ -11,7 +11,7 @@ export class StoreController {
 
   @MessagePattern(StoreTopics.LIST_STORE)
   async list(@Payload() query: ListQuery) {
-    return await this.service.list();
+    return await this.service.list(query);
   }
 
   @MessagePattern(StoreTopics.CREATE_STORE)
