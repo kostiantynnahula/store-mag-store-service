@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { sheets_v4 } from 'googleapis';
 import { SheetHeader } from 'src/utils/constants/sheet-header.constant';
+import { CreateProductDto, UpdateProductDto } from 'store-mag-types';
 
 @Injectable()
 export class SheetConvertorService {
@@ -40,5 +41,27 @@ export class SheetConvertorService {
         [header]: row[index] || null,
       };
     }, {});
+  }
+
+  convertDataToRow(
+    data: Omit<UpdateProductDto, 'index'> | CreateProductDto,
+  ): Array<string | number | boolean> {
+    const sale_date = 'sale_date' in data ? data.sale_date : '';
+    const calculation = 'calculation' in data ? data.calculation : '';
+
+    return [
+      '',
+      data.model,
+      data.imei,
+      data.supplier,
+      sale_date,
+      data.storeId,
+      data.purchase_price,
+      data.sale_price || '',
+      data.salary || '',
+      data.expense,
+      calculation,
+      data.result,
+    ];
   }
 }

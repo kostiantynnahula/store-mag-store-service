@@ -5,11 +5,13 @@ import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
 import { SheetConvertorService } from 'src/utils/services/sheet-convert.service';
 import { LocalCache } from 'src/utils/services/local-cache.service';
+import { CreateProductDto, UpdateProductDto } from 'store-mag-types';
 
 @Injectable()
 export class SheetService {
   private auth: GoogleAuth;
   private readonly sheetId: string;
+  private readonly sheetName: string;
 
   constructor(
     private readonly configService: ConfigService,
@@ -27,6 +29,7 @@ export class SheetService {
     });
 
     this.sheetId = configService.get<string>('GOOGLE_SHEET_ID');
+    this.sheetName = 'Sheet1';
   }
 
   async getClient(): Promise<Compute> {
@@ -60,6 +63,15 @@ export class SheetService {
     return response.data;
   }
 
+  async getSheetId(): Promise<number> {
+    const sheetMetaData = await this.getMetaData();
+    const sheetIdNumber = sheetMetaData.sheets.find(
+      (sheet) => sheet.properties.title === this.sheetName,
+    ).properties.sheetId;
+
+    return sheetIdNumber;
+  }
+
   async getSheetData(): Promise<Record<string, any>> {
     const client = await this.getClient();
 
@@ -90,51 +102,72 @@ export class SheetService {
     return { index, ...rowData };
   }
 
-  async addSheetData(
-    data: string[],
+  async addRow(
+    data: CreateProductDto,
   ): Promise<sheets_v4.Schema$AppendValuesResponse> {
     const sheets = await this.getSheets();
+
+    const values = this.sheetConvertorService.convertDataToRow(data);
 
     const response = await sheets.spreadsheets.values.append({
       auth: this.auth,
       spreadsheetId: this.sheetId,
-      range: 'Sheet1!A1:B2', // TODO: Find a way to get the last row
+      range: 'Sheet1',
       valueInputOption: 'RAW',
       requestBody: {
-        values: [data],
+        values: [values],
       },
     });
 
     return response.data;
   }
 
-  async updateSheetData(
-    data: string[],
-  ): Promise<sheets_v4.Schema$UpdateValuesResponse> {
+  async editRow({
+    index,
+    ...data
+  }: UpdateProductDto): Promise<sheets_v4.Schema$UpdateValuesResponse> {
     const sheets = await this.getSheets();
+
+    const values = this.sheetConvertorService.convertDataToRow(data);
 
     const response = await sheets.spreadsheets.values.update({
       auth: this.auth,
       spreadsheetId: this.sheetId,
-      range: 'Sheet1!A1:B2', // TODO: Find a way to get the last row
+      range: `Sheet1!${index}:${index}`,
       valueInputOption: 'RAW',
       requestBody: {
-        values: [data],
+        values: [values],
       },
     });
 
     return response.data;
   }
 
-  async deleteSheetData(
-    data: string[],
-  ): Promise<sheets_v4.Schema$ClearValuesResponse> {
+  async deleteRow(
+    index: number,
+  ): Promise<sheets_v4.Schema$BatchUpdateSpreadsheetResponse> {
     const sheets = await this.getSheets();
 
-    const response = await sheets.spreadsheets.values.clear({
-      auth: this.auth,
+    const sheetIdNumber = await this.getSheetId();
+
+    const requests = [
+      {
+        deleteDimension: {
+          range: {
+            sheetId: sheetIdNumber,
+            dimension: 'ROWS', // We are deleting a row
+            startIndex: index - 1, // Row indices are zero-based, so subtract 1
+            endIndex: index, // Deletes one row, from startIndex to endIndex - 1
+          },
+        },
+      },
+    ];
+
+    const response = await sheets.spreadsheets.batchUpdate({
       spreadsheetId: this.sheetId,
-      range: 'Sheet1!A1:B2', // TODO: Find a way to get the last row
+      requestBody: {
+        requests,
+      },
     });
 
     return response.data;

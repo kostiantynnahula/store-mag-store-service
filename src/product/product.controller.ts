@@ -27,16 +27,17 @@ export class ProductController {
 
   @MessagePattern(ProductTopics.CREATE_PRODUCT)
   async createProduct(@Payload() data: CreateProductDto) {
-    // return await this.sheetService.createSheetRowData(data);
+    console.log(data);
+    return await this.sheetService.addRow(data);
   }
 
   @MessagePattern(ProductTopics.UPDATE_PRODUCT)
   async updateProduct(@Payload() data: UpdateProductDto) {
-    // return await this.sheetService.updateSheetRowData(data);
+    return await this.sheetService.editRow(data);
   }
 
   @MessagePattern(ProductTopics.DELETE_PRODUCT)
-  async deleteProduct(@Payload() index: string) {
-    // return await this.sheetService.deleteSheetRowData(index);
+  async deleteProduct(@Payload() index: number) {
+    return await this.sheetService.deleteRow(index);
   }
 }
