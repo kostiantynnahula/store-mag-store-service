@@ -21,16 +21,18 @@
     "db:seed": "npx prisma db seed"
   },
   "dependencies": {
+    "@google-cloud/local-auth": "^2.1.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.2.3",
     "@nestjs/core": "^10.0.0",
     "@nestjs/microservices": "^10.4.4",
     "@nestjs/platform-express": "^10.0.0",
     "@prisma/client": "^5.20.0",
+    "googleapis": "^105.0.0",
     "kafkajs": "^2.2.4",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
-    "store-mag-types": "^1.0.8"
+    "store-mag-types": "^1.0.10"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
