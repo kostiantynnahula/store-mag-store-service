@@ -64,4 +64,16 @@ export class SheetConvertorService {
       data.result,
     ];
   }
+
+  getCreatedRowIndex(data: sheets_v4.Schema$AppendValuesResponse): number {
+    const { updates } = data;
+
+    const { updatedRange } = updates;
+
+    const [, segment] = updatedRange.split('!A');
+
+    const [index] = segment.split(':');
+
+    return Number(index);
+  }
 }

@@ -6,6 +6,7 @@ import * as path from 'path';
 import { SheetConvertorService } from 'src/utils/services/sheet-convert.service';
 import { LocalCache } from 'src/utils/services/local-cache.service';
 import { CreateProductDto, UpdateProductDto } from 'store-mag-types';
+import { ColorService } from 'src/utils/services/color.service';
 
 @Injectable()
 export class SheetService {
@@ -119,6 +120,16 @@ export class SheetService {
       },
     });
 
+    const rowIndex = this.sheetConvertorService.getCreatedRowIndex(
+      response.data,
+    );
+
+    const rowColors = ColorService.rowColors(1, 15);
+
+    rowColors.forEach((color) => {
+      this.formatRow(rowIndex, color.from, color.to, color.color);
+    });
+
     return response.data;
   }
 
@@ -169,6 +180,49 @@ export class SheetService {
         requests,
       },
     });
+
+    return response.data;
+  }
+
+  async formatRow(rowIndex, startColumnIndex, endColumnIndex, color: string) {
+    const sheets = await this.getSheets();
+
+    const sheetIdNumber = await this.getSheetId();
+
+    const backgroundColor = ColorService.hexToRgb(color);
+
+    const request = {
+      spreadsheetId: this.sheetId,
+      resource: {
+        requests: [
+          {
+            repeatCell: {
+              range: {
+                sheetId: sheetIdNumber,
+                startRowIndex: rowIndex - 1, // Google Sheets is zero-indexed, so subtract 1
+                endRowIndex: rowIndex,
+                startColumnIndex: startColumnIndex - 1, // If you want to target specific columns (e.g. A = 0, B = 1)
+                endColumnIndex: endColumnIndex, // Exclusive range, so end column + 1
+              },
+              cell: {
+                userEnteredFormat: {
+                  horizontalAlignment: 'CENTER',
+                  textFormat: {
+                    bold: true,
+                  },
+                  backgroundColor,
+                },
+              },
+              fields:
+                'userEnteredFormat(horizontalAlignment, textFormat.bold, backgroundColor)',
+            },
+          },
+        ],
+      },
+      auth: this.auth,
+    };
+
+    const response = await sheets.spreadsheets.batchUpdate(request);
 
     return response.data;
   }

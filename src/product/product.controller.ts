@@ -44,7 +44,11 @@ export class ProductController {
       return badRequest('Supplier not found');
     }
 
-    return await this.sheetService.addRow(data);
+    return await this.sheetService.addRow({
+      ...data,
+      supplier: supplierItem.name,
+      storeId: store.name, // TODO: fix this
+    });
   }
 
   @MessagePattern(ProductTopics.UPDATE_PRODUCT)
