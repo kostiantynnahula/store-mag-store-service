@@ -1,18 +1,21 @@
 import { Controller } from '@nestjs/common';
-import { ProductService } from './product.service';
 import { SheetService } from './sheet/sheet.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
+  badRequest,
   CreateProductDto,
   ProductTopics,
   UpdateProductDto,
 } from 'store-mag-types';
+import { SupplierService } from 'src/supplier/supplier.service';
+import { StoreService } from 'src/store/store.service';
 
 @Controller('product')
 export class ProductController {
   constructor(
-    private readonly productService: ProductService,
     private readonly sheetService: SheetService,
+    private readonly supplierService: SupplierService,
+    private readonly storeService: StoreService,
   ) {}
 
   @MessagePattern(ProductTopics.LIST_PRODUCT)
@@ -27,12 +30,41 @@ export class ProductController {
 
   @MessagePattern(ProductTopics.CREATE_PRODUCT)
   async createProduct(@Payload() data: CreateProductDto) {
-    console.log(data);
+    const { supplier, storeId } = data;
+
+    const store = await this.storeService.findById(storeId);
+
+    if (!store) {
+      return badRequest('Store not found');
+    }
+
+    const supplierItem = await this.supplierService.findByName(supplier);
+
+    if (!supplierItem) {
+      return badRequest('Supplier not found');
+    }
+
     return await this.sheetService.addRow(data);
   }
 
   @MessagePattern(ProductTopics.UPDATE_PRODUCT)
   async updateProduct(@Payload() data: UpdateProductDto) {
+    if (data.storeId) {
+      const store = await this.storeService.findById(data.storeId);
+
+      if (!store) {
+        return badRequest('Store not found');
+      }
+    }
+
+    if (data.supplier) {
+      const supplierItem = await this.supplierService.findByName(data.supplier);
+
+      if (!supplierItem) {
+        return badRequest('Supplier not found');
+      }
+    }
+
     return await this.sheetService.editRow(data);
   }
 
